@@ -1,22 +1,17 @@
 #include <iostream>
 #include <string>
-#define STB_IMAGE_IMPLEMENTATION
-#include <stb_image.h>
+#include <test2.h>
 
 int main()
 {
     std::cout << "The build script works, amazing." << std::endl;
 
-    std::string file = "./res/good.png"; //'.' is run.bat btw, not the exe (pretty stupid tbh)
+    //NOTE(Ethan): btw i've seen jblow and those people use this kinda comment where it says who
+    //             wrote it and stuff like that.
 
-    int width, height, components;
-    width = height = components = 0;
-
-    //load ./res/good.png with stb_image
-    unsigned char *imageData = stbi_load(file.c_str(),
-                                         &width, &height, &components, STBI_rgb_alpha);
-
-    std::cout << "Image Loaded: (" << width << ", " << height << ")" << std::endl;
+    //btw this is just using c style functions, so the syntax is kinda bad. (we prob won't use this
+    //in the actual project
+    do_the_test();
 
     return 0;
 }
