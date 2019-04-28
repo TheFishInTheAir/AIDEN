@@ -7,3 +7,16 @@ cmake_install.cmake
 install_manifest.txt
 compile_commands.json
 CTestTestfile.cmake
+
+
+.emacs_saves/
+
+./build/
+.vs/
+
+build/
+.build/
+.vs/
+.DS_Store
+ge2_frontend/
+./ge2_frontend/
