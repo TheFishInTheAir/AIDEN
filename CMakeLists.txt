@@ -14,3 +14,6 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/libs/headers)
 
 add_executable(AIDEN ${SRC_FILES})
+
+#kinda doesn't ever work from my experience - ethan
+file(COPY "res" DESTINATION "${CMAKE_BINARY_DIR}")
