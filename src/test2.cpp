@@ -7,6 +7,7 @@
 
 void do_the_test()
 {
+	// test
     //'.' is run.bat btw, not the exe (pretty stupid tbh)
     std::string file = resource_manager::get_res_path() +"good.png";
 
