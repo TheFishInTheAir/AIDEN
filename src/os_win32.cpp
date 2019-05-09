@@ -1,5 +1,7 @@
 #include <os_win32.h>
 
+#ifdef _WIN32
+
 //TODO: document this
 LRESULT CALLBACK WndProc(HWND win, UINT msg, WPARAM wParam, LPARAM lParam)
 {
@@ -265,3 +267,5 @@ void os_win32_context::start_thread(void(*func)(void*), void* data)
 	//    assert(false);
 
 }
+
+#endif
