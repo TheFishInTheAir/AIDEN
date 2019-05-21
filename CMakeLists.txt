@@ -20,7 +20,12 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/libs/headers)
 
 add_executable(AIDEN ${SRC_FILES})
 
-target_link_libraries(AIDEN "tensorflow")
+if(MACOSX)
+    #link_directories("/usr/local/lib")
+    message("This is running on OSX")
+    target_link_libraries(AIDEN /usr/local/lib/libtensorflow.so)
+endif()
+
 
 
 #kinda doesn't ever work from my experience - ethan
