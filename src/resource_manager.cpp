@@ -11,6 +11,7 @@
 
 #define FILE_SEP '/'
 
+
 //this just gets the path to the binary
 std::string _get_os_pid_bin_path()
 {
@@ -96,11 +97,59 @@ resource_handle _os_mmap(std::string path, uint32_t flags) // osx
 void _os_munmap(resource_handle h)
 {
     printf("MUNMAP UNIMPLEMENTED IN WINDOWS\n");
+
+
 }
 
 resource_handle _os_mmap(std::string path, uint32_t flags) // osx
 {
-    printf("MMAP UNIMPLEMENTED IN WINDOWS\n");
+    resource_handle res_handle;
+
+    DWORD access, share, page_access;
+    access = share = page_access = 0;
+
+    if(flags & RM_FILE_READ) //if more than one
+        access |= GENERIC_READ;
+
+    if(flags & RM_FILE_WRITE) //if more than one
+        access |= GENERIC_WRITE;
+
+    if(flags & RM_FILE_EXEC) //if more than one
+        access |= GENERIC_EXECUTE;
+
+    if(flags & RM_FILE_CHNG_SHARED) //if more than one
+        share |= FILE_SHARE_WRITE | FILE_SHARE_READ;
+
+
+    if (flags & (RM_FILE_WRITE | RM_FILE_READ | RM_FILE_EXEC))
+        page_access |= PAGE_EXECUTE_READWRITE;
+    else if (flags & (RM_FILE_EXEC | RM_FILE_READ))
+        page_access |= PAGE_EXECUTE_READ;
+    else if (flags & (RM_FILE_WRITE | RM_FILE_READ))
+        page_access |= PAGE_READWRITE;
+    else if (flags & (RM_FILE_READ))
+        page_access |= PAGE_READONLY;
+
+
+    res_handle.file_handle = CreateFile(
+        path.c_str(),
+        access,
+        share,
+        NULL,
+        CREATE_NEW,
+        FILE_ATTRIBUTE_NORMAL,
+        NULL);
+
+    res_handle.mmap_handle = CreateFileMapping(
+        res_handle.mmap_handle,
+        NULL,
+        page_access,
+        0,
+        0,
+        path.c_str());
+
+    return res_handle;
+
 }
 
 //this just gets the path to the binary

@@ -21,9 +21,12 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/libs/headers)
 add_executable(AIDEN ${SRC_FILES})
 
 if(MACOSX)
-    #link_directories("/usr/local/lib")
-    message("This is running on OSX")
-    target_link_libraries(AIDEN /usr/local/lib/libtensorflow.so)
+  #link_directories("/usr/local/lib")
+  message("This is running on OSX")
+  target_link_libraries(AIDEN /usr/local/lib/libtensorflow.so)
+elseif(WIN32)
+  #link_directories("${CMAKE_CURRENT_SOURCE_DIR}/libs/win/")
+  target_link_libraries(AIDEN ${CMAKE_CURRENT_SOURCE_DIR}/libs/win/tensorflow.lib)
 endif()
 
 

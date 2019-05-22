@@ -3,6 +3,10 @@
 #include <cstdint>
 #include <unordered_map>
 
+#ifdef _WIN32
+#include <windows.h>
+#endif
+
 #define RM_FILE_READ         (1 << 0) //can read to file
 #define RM_FILE_WRITE        (1 << 1) //can write to file
 #define RM_FILE_NO_ACCESS    (1 << 2) //can't do anything to file. NOTE: useless I gues.
@@ -19,6 +23,11 @@ struct resource_handle
 
     uint64_t size;
     void* source;
+
+#ifdef _WIN32
+    HANDLE file_handle;
+    HANDLE mmap_handle;
+#endif
 };
 
 //singleton that stores information about local environmet

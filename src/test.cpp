@@ -11,7 +11,7 @@
 int main()
 {
 	os_context* ctx = (os_context*) new os_win32_context();
-	ctx->startup();
+	//ctx->startup();
 
 
     std::cout << "The build script works, amazing." << std::endl;
@@ -29,7 +29,7 @@ int main()
 
     //btw this is just using c style functions, so the syntax is kinda bad. (we prob won't use this
     //in the actual project)
-    do_the_test();
+    //do_the_test();
 
 
 	getc(stdin);
