@@ -3,6 +3,7 @@
 //TODO: document this
 LRESULT CALLBACK WndProc(HWND win, UINT msg, WPARAM wParam, LPARAM lParam)
 {
+	printf("Shit\n");
 	os_win32_context *ctx = (os_win32_context*)GetWindowLongPtr(win, GWLP_USERDATA);
 	return ctx->win32_handler(win, msg, wParam, lParam);
 }
@@ -14,7 +15,7 @@ void os_win32_context::startup()
 	cmd_show = SW_SHOWNORMAL;
 	w32_class.cbSize = sizeof(WNDCLASSEX);
 	w32_class.style = CS_OWNDC | CS_HREDRAW | CS_VREDRAW; //NOTE: should modify
-	w32_class.lpfnWndProc = &WndProc;
+	w32_class.lpfnWndProc = WndProc;
 	w32_class.cbClsExtra = 0;
 	w32_class.cbWndExtra = 0;
 	w32_class.hInstance = instance;
@@ -22,7 +23,7 @@ void os_win32_context::startup()
 	w32_class.hCursor = LoadCursor(NULL, IDC_ARROW);
 	w32_class.hbrBackground = 0;//(HBRUSH)(COLOR_WINDOW+1);
 	w32_class.lpszMenuName = NULL;
-	w32_class.lpszClassName = "BD";
+	w32_class.lpszClassName = "TEST";
 	w32_class.hIconSm = LoadIcon(NULL, IDI_APPLICATION);
 	printf("Win32 Init Done\n");
 
@@ -92,23 +93,31 @@ void os_win32_context::create_win32_window()
 			MB_ICONEXCLAMATION | MB_OK);
 		return;
 	}
-	printf("Created WIN32 Class thing\n"); //@LOG
-
+	printf("Created WIN32 Class \n"); //@LOG
 
 	win = CreateWindowEx(
+		0,
+		"TEST",
+		"TEST",
+		/* WS_OVERLAPPEDWINDOW, */
+		(WS_POPUP | WS_SYSMENU | WS_MAXIMIZEBOX | WS_MINIMIZEBOX),
+		CW_USEDEFAULT, CW_USEDEFAULT, 1920, 1080,
+		NULL, NULL, instance, this);
+
+	/*win = CreateWindowEx(
 		0,//WS_BORDER,
 		APP_NAME,
 		APP_NAME,
-		/* WS_OVERLAPPEDWINDOW, */
-		WS_OVERLAPPEDWINDOW | WS_THICKFRAME | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX | WS_MAXIMIZEBOX,//(WS_POPUP | WS_BORDER | WS_SYSMENU | WS_MAXIMIZEBOX | WS_MINIMIZEBOX), //WS_BORDER
+		/* WS_OVERLAPPEDWINDOW, *//*
+		(WS_POPUP | WS_SYSMENU | WS_MAXIMIZEBOX | WS_MINIMIZEBOX),//WS_OVERLAPPEDWINDOW | WS_THICKFRAME | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX | WS_MAXIMIZEBOX,
 		CW_USEDEFAULT, CW_USEDEFAULT, 900, 600, //TODO: make this configurable
-		NULL, NULL, instance, this);
+		NULL, NULL, instance, this);*/
 
 	if (win == NULL)
 	{
 		MessageBox(NULL, "Window Creation Failed!", "Error!",
 			MB_ICONEXCLAMATION | MB_OK);
-		return;
+		std::exit(1);
 	}
 
 	ShowWindow(win, cmd_show);
