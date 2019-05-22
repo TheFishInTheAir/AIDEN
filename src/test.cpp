@@ -22,7 +22,7 @@ int main()
 	resource_manager::init();
 
 
-	ctx->window_loop_start();
+//	ctx->window_loop_start();
 
     printf("Hello from TensorFlow C library version %s\n", TF_Version());
 
