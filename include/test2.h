@@ -1,3 +1,6 @@
 #pragma once
 
-void do_the_test();
+#include <os.h>
+
+
+void do_the_test(os_context*);

@@ -1,5 +1,8 @@
 #include <resource_manager.h>
+
+#include <log.h>
 #include <iostream>
+
 
 #ifndef WIN32
 #include <libproc.h>
@@ -8,6 +11,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
+#define LOG_TAG "POSIX_RES_MNGR"
 
 #define FILE_SEP '/'
 
@@ -25,10 +29,8 @@ std::string _get_os_pid_bin_path()
     ret = proc_pidpath(pid, pathbuf, sizeof(pathbuf));
 
     if(ret <= 0)
-    {
-        std::cout << "Couldn't get PID path! Exiting.\n" << std::endl;
-        exit(0);
-    }
+        Log::critErr("Couldn't get PID path! Exiting.");
+
     path = pathbuf;
     return path;
 }
@@ -75,7 +77,7 @@ resource_handle _os_mmap(std::string path, uint32_t flags) // osx
     int fd = open(path.c_str(), O_RDONLY, 0);
     if(fd == -1)
     {
-        printf("bad stuff '%s'  .\n", path.c_str()); //TODO: @LOG
+        Log::err(LOG_TAG, "Couldn't open file '" + path + "'.");
         return {0, nullptr};
     }
 
@@ -92,43 +94,62 @@ resource_handle _os_mmap(std::string path, uint32_t flags) // osx
 #else
 #include <windows.h>
 #define FILE_SEP '\\'
+#define LOG_TAG "WIN32_RES_MNGR"
 
 
 void _os_munmap(resource_handle h)
 {
-    printf("MUNMAP UNIMPLEMENTED IN WINDOWS\n");
+    Log::critErr("MUNMAP UNIMPLEMENTED IN WINDOWS\n");
 
 
 }
 
 resource_handle _os_mmap(std::string path, uint32_t flags) // osx
 {
-    resource_handle res_handle;
-
-    DWORD access, share, page_access;
-    access = share = page_access = 0;
+    int err = 0;
+    resource_handle res_handle = {0};
+    Log::tVrb(LOG_TAG, "Mapping File: '"+ path + "'");
+    DWORD access, share, page_access, map_access;
+    access = share = page_access = map_access = 0;
 
     if(flags & RM_FILE_READ) //if more than one
         access |= GENERIC_READ;
 
     if(flags & RM_FILE_WRITE) //if more than one
-        access |= GENERIC_WRITE;
+        access |= GENERIC_WRITE | GENERIC_READ;
 
     if(flags & RM_FILE_EXEC) //if more than one
         access |= GENERIC_EXECUTE;
 
     if(flags & RM_FILE_CHNG_SHARED) //if more than one
-        share |= FILE_SHARE_WRITE | FILE_SHARE_READ;
+        share |= (access & GENERIC_WRITE ? FILE_SHARE_WRITE : 0) |
+                 (access & GENERIC_READ  ? FILE_SHARE_READ  : 0);
 
 
-    if (flags & (RM_FILE_WRITE | RM_FILE_READ | RM_FILE_EXEC))
+    if (flags & RM_FILE_WRITE &&
+        flags & RM_FILE_READ &&
+        flags & RM_FILE_EXEC)
+    {
         page_access |= PAGE_EXECUTE_READWRITE;
-    else if (flags & (RM_FILE_EXEC | RM_FILE_READ))
+        map_access  |= FILE_MAP_ALL_ACCESS | FILE_MAP_EXECUTE;
+    }
+    else if (flags & RM_FILE_EXEC &&
+             flags & RM_FILE_READ)
+    {
         page_access |= PAGE_EXECUTE_READ;
-    else if (flags & (RM_FILE_WRITE | RM_FILE_READ))
+        map_access  |= FILE_MAP_READ | FILE_MAP_EXECUTE;
+    }
+    else if (flags & RM_FILE_WRITE)
+    {
         page_access |= PAGE_READWRITE;
-    else if (flags & (RM_FILE_READ))
+        map_access  |= FILE_MAP_ALL_ACCESS;
+
+    }
+    else if (flags & RM_FILE_READ)
+    {
         page_access |= PAGE_READONLY;
+        map_access  |= FILE_MAP_READ;
+    }
 
 
     res_handle.file_handle = CreateFile(
@@ -136,17 +157,52 @@ resource_handle _os_mmap(std::string path, uint32_t flags) // osx
         access,
         share,
         NULL,
-        CREATE_NEW,
+        OPEN_ALWAYS,
         FILE_ATTRIBUTE_NORMAL,
         NULL);
 
+    if((err = GetLastError()) != ERROR_ALREADY_EXISTS && err != ERROR_SUCCESS)
+        Log::err(LOG_TAG, "Failed to create file handle during memmap. Error: "+std::to_string(err));
+    if(res_handle.file_handle == nullptr)
+        Log::critErr(LOG_TAG, "Failed to create file handle during memmap.");
+
+    if(err == ERROR_ALREADY_EXISTS)
+        SetLastError(ERROR_SUCCESS);
+
+
+    res_handle.size = GetFileSize(res_handle.file_handle, NULL);
+
+    if(res_handle.size == INVALID_FILE_SIZE)
+        Log::err(LOG_TAG, "Invalid File Size Error.");
+    if((err = GetLastError()))
+        Log::err(LOG_TAG, "Failed to get file size. Error: "+std::to_string(err));
+    //Log::dbg(LOG_TAG, "Size: "+std::to_string(res_handle.size));
+
+
+
     res_handle.mmap_handle = CreateFileMapping(
-        res_handle.mmap_handle,
+        res_handle.file_handle,
         NULL,
         page_access,
         0,
-        0,
-        path.c_str());
+        res_handle.size,
+        NULL);
+
+    if(res_handle.mmap_handle == nullptr)
+        Log::critErr(LOG_TAG, "Failed to create mapping handle during memmap.");
+    //if((err = GetLastError()) != ERROR_ALREADY_EXISTS && err != ERROR_SUCCESS)
+    if((err = GetLastError()))
+        Log::err(LOG_TAG, "Failed to create mapping handle during memmap. Error: "+std::to_string(err));
+
+    res_handle.source = MapViewOfFile(res_handle.mmap_handle,
+                                      map_access,
+                                      0,
+                                      0,
+                                      0);
+
+    if((err = GetLastError()))
+        Log::err(LOG_TAG, "Failed to map view of file. Error: "+std::to_string(err));
+
 
     return res_handle;
 
@@ -194,13 +250,16 @@ void resource_manager::init()
 		//go back to slashes
 		{
 			std::string temp = exe_path.substr(0, exe_path.find_last_of(FILE_SEP));
-			folder_path = temp.substr(0, temp.find_last_of(FILE_SEP));
+			folder_path = temp.substr(0, temp.find_last_of(FILE_SEP)+1);
 		}
 
 		//append /res/ to the path
-		res_path = folder_path + FILE_SEP + "res" + FILE_SEP;
+		res_path = folder_path + "res" + FILE_SEP;
 
-        std::cout << "PID path: " << exe_path << std::endl;
+        Log::vrb(LOG_TAG, "PID    Path: " + exe_path);
+        Log::vrb(LOG_TAG, "RES    Path: " + res_path);
+        Log::vrb(LOG_TAG, "FOLDER Path: " + folder_path);
+
     }
 }
 

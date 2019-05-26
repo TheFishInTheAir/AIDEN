@@ -1,5 +1,6 @@
 #include <os_win32.h>
-
+#include <log.h>
+#define LOG_TAG "WIN32"
 #ifdef _WIN32
 
 //This function is a wrapper over the handler function.
@@ -15,7 +16,7 @@ LRESULT CALLBACK WndProc(HWND win, UINT msg, WPARAM wParam, LPARAM lParam)
 //Win32 Class initialisation function.
 void os_win32_context::startup()
 {
-	printf("Win32 Init\n");
+    Log::msg(LOG_TAG, "Win32 Init Starting.");
 	instance = GetModuleHandle(NULL);
 	cmd_show = SW_SHOWNORMAL;
 	w32_class.cbSize = sizeof(WNDCLASSEX);
@@ -30,7 +31,8 @@ void os_win32_context::startup()
 	w32_class.lpszMenuName = NULL;
 	w32_class.lpszClassName = "AIDEN"; //TODO: specify proper class name elsewhere.
 	w32_class.hIconSm = LoadIcon(NULL, IDI_APPLICATION);
-	printf("Win32 Init Done\n");
+
+    Log::scc(LOG_TAG, "Win32 Init Finished.");
 
 	create_win32_window();
 }
@@ -39,7 +41,7 @@ void os_win32_context::startup()
 //It processes all events.
 void os_win32_context::window_loop_start()
 {
-	printf("Starting WIN32 Window Loop\n");
+    Log::msg(LOG_TAG, "Starting WIN32 Window Loop");
 	MSG msg;
 
 	while (true) //NOTE(Ethan): This is super temorary
@@ -104,7 +106,7 @@ void os_win32_context::window_test_draw()
 //Window creation and setup function.
 void os_win32_context::create_win32_window()
 {
-	printf("Creating WIN32 Window\n"); //@LOG
+    Log::msg(LOG_TAG, "Creating WIN32 Window.");
 
 	if (!RegisterClassEx(&w32_class))
 	{
@@ -112,7 +114,7 @@ void os_win32_context::create_win32_window()
 			MB_ICONEXCLAMATION | MB_OK);
 		return;
 	}
-	printf("Created WIN32 Class \n"); //@LOG
+    Log::scc("Created WIN32 Class.");
 
 	win = CreateWindowEx(
 		0,
@@ -124,7 +126,8 @@ void os_win32_context::create_win32_window()
 
 	if (win == NULL)
 	{
-        std::cout << "Win32 Error: " << GetLastError() << std::endl; //@LOG
+        Log::critErr(LOG_TAG, "Win32 Window Creation Error: " + std::to_string(GetLastError()));
+
 		MessageBox(NULL, "Window Creation Failed!", "Error!",
 			MB_ICONEXCLAMATION | MB_OK);
 		std::exit(1); //@UNSAFE_EXIT
