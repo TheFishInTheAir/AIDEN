@@ -11,7 +11,7 @@
 int main()
 {
 	os_context* ctx = (os_context*) new os_win32_context();
-	//ctx->startup();
+	ctx->startup();
 
 
     std::cout << "The build script works, amazing." << std::endl;
@@ -22,7 +22,7 @@ int main()
 	resource_manager::init();
 
 
-//	ctx->window_loop_start();
+	ctx->window_loop_start();
 
     printf("Hello from TensorFlow C library version %s\n", TF_Version());
 

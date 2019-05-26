@@ -5,8 +5,8 @@
 //TODO: document this
 LRESULT CALLBACK WndProc(HWND win, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-	printf("Shit\n");
 	os_win32_context *ctx = (os_win32_context*)GetWindowLongPtr(win, GWLP_USERDATA);
+
 	return ctx->win32_handler(win, msg, wParam, lParam);
 }
 
@@ -69,13 +69,25 @@ void os_win32_context::window_test_draw()
 		uint8_t* pixel = (uint8_t*)row;
 		for (int x = 0; x < width; x++)
 		{
-			*pixel = sin(((float)x) / 150) * 255;
+
+            float colour = sin(x/50.f + sin(y/25.f)/5.f)*cos(y/50.f) *
+                sin(x/50.f  + sin(y/25.f)/5.f + 0.5f)*cos(y/50.f + 0.5f)*
+                sin(x/50.f  + sin(y/25.f)/5.f - 0.5f)*cos(y/50.f - 0.5f);
+
+            //colour = colour < 0.f ? 0.f : colour;
+            //*pixel = sin(x/50.f)*cos(y/50.f) * 255;
+            *pixel = colour * 255;
+			//*pixel = sin(((float)x) / 120) * 255;
 			++pixel;
 
-			*pixel = cos(((float)x) / 10) * 100;
+            //*pixel = sin(x/50.f + 0.5f)*cos(y/50.f + 0.5f) * 255;
+            *pixel = colour * 255;
+			//*pixel = cos(((float)x) / 10) * 100;
 			++pixel;
 
-			*pixel = cos(((float)y) / 50) * 255;
+            //*pixel = sin(x/50.f + 1.f)*cos(y/50.f + 1.f) * 255;
+            *pixel = colour * 255;
+			//*pixel = cos(((float)y) / 50) * 255;
 			++pixel;
 
 			*pixel = 0;
@@ -117,6 +129,7 @@ void os_win32_context::create_win32_window()
 
 	if (win == NULL)
 	{
+        std::cout << "Win32 Error: " << GetLastError() << std::endl;
 		MessageBox(NULL, "Window Creation Failed!", "Error!",
 			MB_ICONEXCLAMATION | MB_OK);
 		std::exit(1);
@@ -180,7 +193,6 @@ LRESULT os_win32_context::win32_handler(HWND win, UINT msg, WPARAM wParam, LPARA
 		break;
 	case WM_SIZE:
 	{
-		std::cout << "you shouldn't be able to do this lol." << std::endl;
 		RECT drawable_rect;
 		GetClientRect(win, &drawable_rect);
 
@@ -194,6 +206,7 @@ LRESULT os_win32_context::win32_handler(HWND win, UINT msg, WPARAM wParam, LPARA
 	{
 		SetWindowLongPtr(win, GWLP_USERDATA, (LONG_PTR)((CREATESTRUCT*)lParam)->lpCreateParams);
 		SetWindowPos(win, 0, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER); //prevents data from being cached
+        return true; //Continue Window Creation
 	} break;
 	case WM_CLOSE:
 		std::exit(1);
