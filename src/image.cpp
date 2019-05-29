@@ -1,7 +1,5 @@
 #include <image.h>
 #include <log.h>
-
-#define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 
 const std::string LOG_TAG = "Image";

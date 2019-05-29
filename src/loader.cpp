@@ -3,7 +3,7 @@
 #include <log.h>
 #include <resource_manager.h>
 
-#include <nlohmann/json.hpp>
+#include <json.hpp>
 #include <string>
 
 namespace Loader

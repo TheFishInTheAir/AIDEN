@@ -99,16 +99,16 @@ resource_handle _os_mmap(std::string path, uint32_t flags) // osx
 
 void _os_munmap(resource_handle h)
 {
-    Log::critErr("MUNMAP UNIMPLEMENTED IN WINDOWS\n");
-
-
+    Log::tVrb(LOG_TAG, "Unmapping File at address: "+std::to_string((uint64_t)h.source));
+    UnmapViewOfFile(h.source);
+    CloseHandle(h.mmap_handle);
+    CloseHandle(h.file_handle);
 }
 
 resource_handle _os_mmap(std::string path, uint32_t flags) // osx
 {
     int err = 0;
     resource_handle res_handle = {0};
-    Log::tVrb(LOG_TAG, "Mapping File: '"+ path + "'");
     DWORD access, share, page_access, map_access;
     access = share = page_access = map_access = 0;
 
@@ -171,7 +171,8 @@ resource_handle _os_mmap(std::string path, uint32_t flags) // osx
 
 
     res_handle.size = GetFileSize(res_handle.file_handle, NULL);
-
+    if(res_handle.size==0)
+        Log::err(LOG_TAG, "File size of zero, this could mean an incorrect url. "+path);
     if(res_handle.size == INVALID_FILE_SIZE)
         Log::err(LOG_TAG, "Invalid File Size Error.");
     if((err = GetLastError()))
@@ -188,17 +189,20 @@ resource_handle _os_mmap(std::string path, uint32_t flags) // osx
         res_handle.size,
         NULL);
 
+    if((err = GetLastError()))
+        Log::err(LOG_TAG, "Failed to create mapping handle during memmap. Error: "+std::to_string(err));
     if(res_handle.mmap_handle == nullptr)
         Log::critErr(LOG_TAG, "Failed to create mapping handle during memmap.");
     //if((err = GetLastError()) != ERROR_ALREADY_EXISTS && err != ERROR_SUCCESS)
-    if((err = GetLastError()))
-        Log::err(LOG_TAG, "Failed to create mapping handle during memmap. Error: "+std::to_string(err));
 
     res_handle.source = MapViewOfFile(res_handle.mmap_handle,
                                       map_access,
                                       0,
                                       0,
                                       0);
+
+    Log::tVrb(LOG_TAG, "Mapping File: '" + path + "' Mapped to: " +
+              std::to_string((uint64_t)res_handle.source));
 
     if((err = GetLastError()))
         Log::err(LOG_TAG, "Failed to map view of file. Error: "+std::to_string(err));

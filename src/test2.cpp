@@ -43,8 +43,8 @@ void do_the_test(os_context* ctx)
 
     //Set Test
     data_set* ds = new data_set(resource_manager::get_res_path()+"data/test1/");
-    Log::dbg("pls help\n");
 
+    //test blit the loaded files
     for(int y = 0; y < height; y++) //blit and convert to the win32 colourspace.
         for(int x = 0; x <width; x++)
         {

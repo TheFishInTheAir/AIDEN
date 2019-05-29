@@ -5,7 +5,8 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
-#include <nlohmann/json.hpp>
+#include <json.hpp>
+#include <tiny_gltf.h>
 
 class data_set_elem
 {
@@ -24,7 +25,7 @@ public:
 
     std::string name;
     bool is_animated; //NOTE(Ethan): currently no support for animated data sets
-    std::string gltf_ref; //TODO: replace with a gltf object
+    tinygltf::Model environment; //TODO: replace with a gltf object
 
     uint32_t width, height;
 

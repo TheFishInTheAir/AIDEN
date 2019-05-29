@@ -1,7 +1,7 @@
 {
     "data_name":"Test1",
     "is_animated":false,
-    "scene_path":"test1.gltf",
+    "scene_path":"test1.glb",
 
     "height_resolution":512,
     "width_resolution" :512,

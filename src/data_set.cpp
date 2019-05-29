@@ -4,6 +4,7 @@
 #include <image.h>
 #include <stb_image.h>
 
+
 const std::string LOG_TAG = "DataSet";
 
 data_set::data_set(std::string path)
@@ -28,7 +29,7 @@ void data_set::parse_json(nlohmann::json data, std::string path)
         {
             Log::err(LOG_TAG, "SKIPPING, Animated sets are currently not supported.");
             width = height = 0;
-
+            return;
         }
 
         //NOTE(Ethan): this assumes that everything is static
@@ -45,6 +46,37 @@ void data_set::parse_json(nlohmann::json data, std::string path)
 
         img = image::load_from_url( path + data["static_reference"]["path"].get<std::string>() ,
                                     STBI_rgb_alpha);
+
+        //GLTF loading
+        {
+            std::string gltf_path = data["scene_path"].get<std::string>();
+            resource_handle rh = resource_manager::load_file(path+gltf_path, RM_FILE_DR);
+
+            static tinygltf::TinyGLTF loader;
+
+            std::string err;
+            std::string warn;
+
+            bool success = loader.LoadBinaryFromMemory(&environment, &err, &warn,
+                                                       (uint8_t*)rh.source,
+                                                       rh.size, path+gltf_path);
+
+            if(!warn.empty())
+                Log::wrn(LOG_TAG, warn);
+
+            if(!err.empty())
+            {
+                Log::err(LOG_TAG, err);
+                return;
+            }
+
+            if(!success)
+            {
+                Log::err(LOG_TAG, "Loading GLTF File '"+path+gltf_path+"'. Stopping.");
+                return;
+            }
+
+        }
 
         //set success flag to true.
         successfully_generated = true;
