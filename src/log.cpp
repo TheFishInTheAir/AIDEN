@@ -9,6 +9,8 @@
 #include <windows.h>
 #endif
 
+#define ENABLE_TURBO_VERBOSE
+
 namespace Log
 {
     std::mutex canPrint;

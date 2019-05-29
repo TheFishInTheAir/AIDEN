@@ -1,0 +1,21 @@
+{
+    "data_name":"Test1",
+    "is_animated":false,
+    "scene_path":"test1.gltf",
+
+    "height_resolution":512,
+    "width_resolution" :512,
+
+    "static_data_set":
+    [
+        {
+            "num_samples":64,
+            "path":"test64.png"
+        }
+    ],
+
+    "static_reference":
+    {
+        "path":"test_reference.png"
+    }
+}

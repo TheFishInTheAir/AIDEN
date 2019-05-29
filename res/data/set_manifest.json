@@ -1,0 +1,10 @@
+{
+    "___comment___":"This file shouldn't be necessary to be honest, but OXS support of c++17 filesystem is trash and this is the safest way rn.",
+    "sets":
+    [
+        {
+            "name":"Test1",
+            "path":"test1/"
+        }
+    ]
+}
