@@ -97,37 +97,30 @@ namespace Log
 
         case MessageType::Warning:          // yellow
             RawOut("\033[33m"+msg+"\033[0m");
-            GECON_PRINT(msg, GECON_WARNING);
 
             break;
         case MessageType::Message:          // white
             RawOut("\033[0m"+msg+"\033[0m");
-            GECON_PRINT(msg, GECON_MESSAGE);
 
             break;
         case MessageType::Success:          // green
             RawOut("\033[32;1m"+msg+"\033[0m");
-            GECON_PRINT(msg, GECON_SUCCESS);
 
             break;
         case MessageType::Error:            // dark red
             RawOut("\033[31;1;7m"+msg+"\033[0m");
-            GECON_PRINT(msg, GECON_ERROR);
 
             break;
         case MessageType::Debug:            // purple
             RawOut("\033[35m"+msg+"\033[0m");
-            GECON_PRINT(msg, GECON_SUCCESS);
 
             break;
         case MessageType::Verbose:          // grey
             RawOut("\033[37m"+msg+"\033[0m");
-            GECON_PRINT(msg, GECON_MESSAGE);
 
             break;
         case MessageType::Turbo_Verbose:    // dark grey
             RawOut("\033[90m"+msg+"\033[0m");
-            GECON_PRINT(msg, GECON_MESSAGE);
 
             break;
         default:

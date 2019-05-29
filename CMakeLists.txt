@@ -1,4 +1,6 @@
 cmake_minimum_required(VERSION 3.8)
+set(CMAKE_CXX_FLAGS "-std=c++11 -stdlib=libc++")
+
 project(AIDEN)
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
@@ -28,7 +30,6 @@ elseif(WIN32)
   #link_directories("${CMAKE_CURRENT_SOURCE_DIR}/libs/win/")
   target_link_libraries(AIDEN ${CMAKE_CURRENT_SOURCE_DIR}/libs/win/tensorflow.lib)
 endif()
-
 
 
 #kinda doesn't ever work from my experience - ethan
