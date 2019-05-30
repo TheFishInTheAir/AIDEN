@@ -3,6 +3,7 @@
 #include <string>
 #include <resource_manager.h>
 #include <log.h>
+#include <gbuffer_ogl.h>
 #include <stb_image.h>
 #include <data_set.h>
 
@@ -58,6 +59,10 @@ void do_the_test(os_context* ctx)
             bmap[(x+1200+y*ctx->get_window_width())*4+2] = ds->sets[0].img.data[(x+y*width)*4];
             bmap[(x+1200+y*ctx->get_window_width())*4+3] = ds->sets[0].img.data[(x+y*width)*4+3];
         }
+
+    //OpenGL Tests
+
+    new gbuffer_renderer_ogl(ctx);
 
     Log::scc("Finished Tests");
 

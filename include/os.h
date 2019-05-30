@@ -14,6 +14,9 @@ public:
 	//redraw bitmap
 	virtual void  window_update() = 0;
 
+    //generate opengl offscreen window & context
+	virtual void  initialise_opengl_offscreen() = 0;
+
 	//fills window with test bitmap
 	virtual void  window_test_draw() = 0;
 	

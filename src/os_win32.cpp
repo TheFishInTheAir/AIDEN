@@ -1,7 +1,12 @@
 #include <os_win32.h>
 #include <log.h>
+
 #define LOG_TAG "WIN32"
+
+#define EVENT_OGL_CREATE_CONTEXT 1
+
 #ifdef _WIN32
+
 
 //This function is a wrapper over the handler function.
 //All it does is call the handler function with the proper context
@@ -46,18 +51,25 @@ void os_win32_context::window_loop_start()
 
 	while (true) //NOTE(Ethan): This is super temorary
 	{
-		if (GetMessage(&msg, 0, 0, 0) > 0)
-		{
-			if (msg.message == WM_QUIT)
-			{
-                //We don't have to deal with safe exits right now so just do the
-                //fastest possible exit.
-				std::exit(1); //@UNSAFE_EXIT
-			}
-
-			TranslateMessage(&msg);
-			DispatchMessage(&msg);
-		}
+		while(PeekMessage(&msg, 0, 0, 0, PM_REMOVE))
+        {
+            if(msg.message == WM_QUIT)
+            {
+                std::exit(1); //@UNSAFE_EXIT
+            }
+            TranslateMessage(&msg);
+            DispatchMessage(&msg);
+        }
+        if(!event_queue.empty())
+        {
+            switch(event_queue.front().first)
+            {
+            case EVENT_OGL_CREATE_CONTEXT:
+                _initialise_opengl_offscreen_real(event_queue.front().second);
+                break;
+            }
+            event_queue.pop();
+        }
 	}
 }
 
@@ -65,9 +77,9 @@ void os_win32_context::window_loop_start()
 //The reason this function exists is just to hide all of the internal win32 context stuff.
 void os_win32_context::window_update()
 {
-	HDC dc = GetDC(win); //Capture device context for drawing.
+	HDC dc = GetDC(win_h); //Capture device context for drawing.
 	update_win32_window(dc);
-	ReleaseDC(win, dc);
+	ReleaseDC(win_h, dc);
 }
 
 //Generates a fun pattern, mostly used to test if the bitmap is drawing correctly.
@@ -83,19 +95,14 @@ void os_win32_context::window_test_draw()
 		{
 
             //Pattern function
-            float colour = sin(x/50.f + sin(y/25.f)/5.f)*cos(y/50.f) *
-                sin(x/50.f  + sin(y/25.f)/5.f + 0.5f)*cos(y/50.f + 0.5f)*
-                sin(x/50.f  + sin(y/25.f)/5.f - 0.5f)*cos(y/50.f - 0.5f);
+            *pixel = sin(((float)x + sin(y/50.f)*10.f)/150)*255;
+            ++pixel;
 
-            *pixel = colour * 255;
-			++pixel;
+            *pixel = cos(((float)x + sin(y/50.f)*10.f)/10)*100;
+            ++pixel;
 
-            *pixel = colour * 255;
-			++pixel;
-
-            *pixel = colour * 255;
-			++pixel;
-
+            *pixel = cos(((float)y)/50)*255;
+            ++pixel;
 			*pixel = 0;
 			++pixel;
 		}
@@ -116,15 +123,15 @@ void os_win32_context::create_win32_window()
 	}
     Log::scc("Created WIN32 Class.");
 
-	win = CreateWindowEx(
+	win_h = CreateWindowEx(
 		0,
 		"AIDEN",   //TODO: properly specify this stuff somewhere else.
-		"AIDEN",
+		"AIDEN_MAIN",
 		(WS_POPUP | WS_SYSMENU | WS_MAXIMIZEBOX | WS_MINIMIZEBOX), //borderless fullscreen style.
 		CW_USEDEFAULT, CW_USEDEFAULT, 1920, 1080, //TODO: variable resolution
 		NULL, NULL, instance, this);
 
-	if (win == NULL)
+	if (win_h == NULL)
 	{
         Log::critErr(LOG_TAG, "Win32 Window Creation Error: " + std::to_string(GetLastError()));
 
@@ -133,8 +140,53 @@ void os_win32_context::create_win32_window()
 		std::exit(1); //@UNSAFE_EXIT
 	}
 
-	ShowWindow(win, cmd_show);
-	UpdateWindow(win);
+	ShowWindow(win_h, cmd_show);
+	UpdateWindow(win_h);
+}
+
+
+void os_win32_context::_initialise_opengl_offscreen_real(std::atomic<bool>& success)
+{
+    Log::msg(LOG_TAG, "Creating OpenGL WIN32 Window.");
+
+    HWND hwin;
+	hwin = CreateWindowEx(
+		0,
+		"AIDEN",   //TODO: properly specify this stuff somewhere else.
+		"AIDEN_OGL",
+        WS_OVERLAPPEDWINDOW,
+		CW_USEDEFAULT, CW_USEDEFAULT, 1920, 1080, //TODO: variable resolution
+		NULL, NULL, instance, this);
+
+	if (hwin == NULL)
+	{
+        Log::critErr(LOG_TAG, "Win32 Window Creation Error: " + std::to_string(GetLastError()));
+
+		MessageBox(NULL, "Window Creation Failed!", "Error!",
+                   MB_ICONEXCLAMATION | MB_OK);
+		std::exit(1); //@UNSAFE_EXIT
+	}
+
+	//ShowWindow(hwin, cmd_show);
+	UpdateWindow(hwin);
+
+    success = true;
+}
+
+//Creates a hidden window and opengl context
+void os_win32_context::initialise_opengl_offscreen()
+{
+    Log::vrb(LOG_TAG, "Queueing OpenGL WIN32 Window Creation.");
+
+    std::atomic<bool> success;
+    success = false;
+
+    event_queue.push({(uint32_t)EVENT_OGL_CREATE_CONTEXT, success});
+
+    int _i = 0;
+    while(!success) _i += (_i>2 ? -1 : 1); //spinlock
+
+    Log::scc(LOG_TAG, "Completed OpenGL WIN32 Window Creation.");
 }
 
 //Bitmap initialisation function.
@@ -180,8 +232,7 @@ void os_win32_context::update_win32_window(HDC device_context)
 //the win32 abstraction.
 LRESULT os_win32_context::win32_handler(HWND win, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-
-	switch (msg)
+    switch (msg)
 	{
 	case WM_KEYDOWN:
 		switch (wParam)
@@ -200,9 +251,9 @@ LRESULT os_win32_context::win32_handler(HWND win, UINT msg, WPARAM wParam, LPARA
 
 		height = drawable_rect.bottom - drawable_rect.top;
 		width = drawable_rect.right - drawable_rect.left;
-		create_bitmap();
 
-		window_test_draw();
+        create_bitmap();
+        window_test_draw();
 	} break;
 	case WM_NCCREATE: //Properly store the Window Context
 	{
@@ -217,8 +268,11 @@ LRESULT os_win32_context::win32_handler(HWND win, UINT msg, WPARAM wParam, LPARA
 		break;
 	case WM_ACTIVATEAPP: //NOTE (Ethan): I used to do something here but I don't remember lol.
 		break;
+    //NOTE (Ethan): It's fairly unsafe, but this shouldn't get called from the OGL window bc
+    //it's never shown. To be honest, we should still test for it though.
 	case WM_PAINT: //Redraw the bitmap
 	{
+
 		PAINTSTRUCT paint;
 		HDC device_context = BeginPaint(win, &paint);
 		EndPaint(win, &paint);
@@ -255,7 +309,6 @@ uint32_t os_win32_context::get_window_height()
 {
 	return height;
 }
-
 
 
 //NOTE(Ethan): I just copy-pasted this from the raytracer so I'm going to need to document this later
