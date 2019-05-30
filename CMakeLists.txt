@@ -11,7 +11,7 @@ endif() #${CMAKE_SYSTEM_NAME} MATCHES "Darwin"
 
 file(GLOB_RECURSE SRC_FILES
   ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp
-  ${CMAKE_BINARY_DIR}/src*.c)
+  ${CMAKE_BINARY_DIR}/src/*.c)
 
 file(GLOB_RECURSE INC_FILES #unused rn
   ${CMAKE_CURRENT_SOURCE_DIR}/include/*.h
@@ -34,6 +34,7 @@ elseif(WIN32)
   target_link_libraries(AIDEN ${CMAKE_CURRENT_SOURCE_DIR}/libs/win/tensorflow.lib)
 endif()
 
+target_link_libraries(AIDEN OpenGL32)
 
 #kinda doesn't ever work from my experience - ethan
 file(COPY "res" DESTINATION "${CMAKE_BINARY_DIR}")

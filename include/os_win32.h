@@ -34,7 +34,8 @@ private:
 	void create_win32_window();
 	void update_win32_window(HDC);
 	void create_bitmap();
-    void _initialise_opengl_offscreen_real(std::atomic<bool>&);
+    void _initialise_opengl_offscreen_real();
+    void _ogl_init(HWND);
 
     std::queue<std::pair<uint32_t, std::atomic<bool>&>> event_queue;
 

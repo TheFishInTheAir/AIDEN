@@ -1,5 +1,7 @@
 #include <os_win32.h>
 #include <log.h>
+#include <GL/gl3w.h>
+
 
 #define LOG_TAG "WIN32"
 
@@ -40,6 +42,7 @@ void os_win32_context::startup()
     Log::scc(LOG_TAG, "Win32 Init Finished.");
 
 	create_win32_window();
+    _initialise_opengl_offscreen_real();
 }
 
 //This is the core update loop for the window.
@@ -51,6 +54,16 @@ void os_win32_context::window_loop_start()
 
 	while (true) //NOTE(Ethan): This is super temorary
 	{
+        if(GetMessage(&msg, 0, 0, 0) > 0)
+        {
+            if(msg.message == WM_QUIT)
+            {
+                std::exit(1); //@UNSAFE_EXIT
+            }
+            TranslateMessage(&msg);
+            DispatchMessage(&msg);
+        }
+        /*
 		while(PeekMessage(&msg, 0, 0, 0, PM_REMOVE))
         {
             if(msg.message == WM_QUIT)
@@ -65,11 +78,12 @@ void os_win32_context::window_loop_start()
             switch(event_queue.front().first)
             {
             case EVENT_OGL_CREATE_CONTEXT:
-                _initialise_opengl_offscreen_real(event_queue.front().second);
+                _initialise_opengl_offscreen_real();
                 break;
             }
+            event_queue.front().second = true;
             event_queue.pop();
-        }
+            }*/
 	}
 }
 
@@ -121,7 +135,7 @@ void os_win32_context::create_win32_window()
 			MB_ICONEXCLAMATION | MB_OK);
 		return;
 	}
-    Log::scc("Created WIN32 Class.");
+    Log::scc(LOG_TAG, "Created WIN32 Class.");
 
 	win_h = CreateWindowEx(
 		0,
@@ -144,9 +158,53 @@ void os_win32_context::create_win32_window()
 	UpdateWindow(win_h);
 }
 
-
-void os_win32_context::_initialise_opengl_offscreen_real(std::atomic<bool>& success)
+void os_win32_context::_ogl_init(HWND win)
 {
+		PIXELFORMATDESCRIPTOR pfd =
+		{
+			sizeof(PIXELFORMATDESCRIPTOR),
+			1,
+			PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER,    //Flags
+			PFD_TYPE_RGBA,        // The kind of framebuffer. RGBA or palette.
+			32,                   // Colordepth of the framebuffer.
+			0, 0, 0, 0, 0, 0,
+			0,
+			0,
+			0,
+			0, 0, 0, 0,
+			24,                   // Number of bits for the depthbuffer
+			8,                    // Number of bits for the stencilbuffer
+			0,                    // Number of Aux buffers in the framebuffer.
+			PFD_MAIN_PLANE,
+			0,
+			0, 0, 0
+		};
+
+
+		HDC dc = GetDC(win);
+        if(dc==nullptr)
+            Log::critErr(LOG_TAG, "fuck"); //TODO: proper error message
+
+		int  letWindowsChooseThisPixelFormat; //TODO: refactor
+		letWindowsChooseThisPixelFormat = ChoosePixelFormat(dc, &pfd);
+		SetPixelFormat(dc,letWindowsChooseThisPixelFormat, &pfd);
+
+
+		HGLRC render_ctx = wglCreateContext(dc);
+        if(render_ctx == nullptr)
+            Log::critErr(LOG_TAG, "fuck2"); //TODO: proper error message
+
+
+        wglMakeCurrent (dc, render_ctx);
+
+        gl3wInit();
+
+        Log::scc(LOG_TAG, std::string() + "OpenGL Version: " + (char*)glGetString(GL_VERSION));
+}
+
+void os_win32_context::_initialise_opengl_offscreen_real()
+{
+
     Log::msg(LOG_TAG, "Creating OpenGL WIN32 Window.");
 
     HWND hwin;
@@ -170,12 +228,13 @@ void os_win32_context::_initialise_opengl_offscreen_real(std::atomic<bool>& succ
 	//ShowWindow(hwin, cmd_show);
 	UpdateWindow(hwin);
 
-    success = true;
 }
 
 //Creates a hidden window and opengl context
 void os_win32_context::initialise_opengl_offscreen()
 {
+    Log::critErr(LOG_TAG, "This function is currently deprecated.");
+
     Log::vrb(LOG_TAG, "Queueing OpenGL WIN32 Window Creation.");
 
     std::atomic<bool> success;
@@ -259,6 +318,15 @@ LRESULT os_win32_context::win32_handler(HWND win, UINT msg, WPARAM wParam, LPARA
 	{
 		SetWindowLongPtr(win, GWLP_USERDATA, (LONG_PTR)((CREATESTRUCT*)lParam)->lpCreateParams);
 		SetWindowPos(win, 0, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER); //prevents data from being cached
+
+        os_win32_context* ctx = (os_win32_context*) (LONG_PTR)((CREATESTRUCT*)lParam)->lpCreateParams;
+        //test for ogl
+        //NOTE(Ethan): this is super quick and bad. just checking if the bitmap buffer has been
+        //             defined yet. If it has: window two, if it hasn't: window one.
+
+        if(ctx->bitmap_buffer!=nullptr)
+            ctx->_ogl_init(win);
+
         return true; //Continue Window Creation
 	} break;
 	case WM_CLOSE:

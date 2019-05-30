@@ -62,7 +62,7 @@ void do_the_test(os_context* ctx)
 
     //OpenGL Tests
 
-    new gbuffer_renderer_ogl(ctx);
+    //new gbuffer_renderer_ogl(ctx);
 
     Log::scc("Finished Tests");
 
