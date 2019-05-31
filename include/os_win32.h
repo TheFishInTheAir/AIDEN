@@ -1,6 +1,9 @@
 #pragma once
 #ifdef _WIN32
 
+#define OS_CTX_TYPE os_win32_context
+
+
 #include <os.h>
 #include <windows.h>
 #include <string>
@@ -19,8 +22,8 @@ public:
 	uint32_t get_window_height();
 	void  start_thread(void(*)(void*), void*);
 
-	std::string set_title(std::string);
-	std::string get_title();
+	std::string set_title(std::string); //not used
+	std::string get_title(); //not used
 
 	LRESULT win32_handler(HWND win, UINT msg, WPARAM wParam, LPARAM lParam);
 

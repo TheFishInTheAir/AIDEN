@@ -4,7 +4,8 @@
 #include <resource_manager.h>
 
 #include <os.h>
-#include <os_win32.h>
+#include <os_win32.h> //NOTE: safe to include
+#include <os_osx.h>   //NOTE: safe to include
 #include <log.h>
 
 #include <tensorflow/c/c_api.h>
@@ -20,7 +21,7 @@ void run(void* meta)
 
 int main()
 {
-	os_context* ctx = (os_context*) new os_win32_context();
+	os_context* ctx = (os_context*) new OS_CTX_TYPE();
 	ctx->startup();
 
     Log::scc("This build script actually works.");
