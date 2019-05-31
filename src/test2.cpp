@@ -2,8 +2,8 @@
 #include <iostream>
 #include <string>
 #include <resource_manager.h>
-#include <loader.h>
 #include <log.h>
+#include <gbuffer_ogl.h>
 #include <stb_image.h>
 #include <data_set.h>
 
@@ -38,9 +38,6 @@ void do_the_test(os_context* ctx)
         }
 
 
-    //Json Test
-    Loader::json_print_test(resource_manager::get_res_path() + "test.json");
-
     //Set Test
     data_set* ds = new data_set(resource_manager::get_res_path()+"data/test1/");
 
@@ -62,5 +59,11 @@ void do_the_test(os_context* ctx)
             bmap[(x+1200+y*ctx->get_window_width())*4+2] = ds->sets[0].img.data[(x+y*width)*4];
             bmap[(x+1200+y*ctx->get_window_width())*4+3] = ds->sets[0].img.data[(x+y*width)*4+3];
         }
+
+    //OpenGL Tests
+
+    //new gbuffer_renderer_ogl(ctx);
+
+    Log::scc("Finished Tests");
 
 }

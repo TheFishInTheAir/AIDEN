@@ -1,6 +1,8 @@
 IF NOT EXIST .\build mkdir .\build
 pushd .\build
 
+python ..\libs\gl3w_gen.py
+
 xcopy /s ..\res .\res\ /Y /D
 
 ::-DSET_GLEW_STATIC=1
