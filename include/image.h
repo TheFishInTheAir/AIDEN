@@ -18,3 +18,16 @@ public:
     uint64_t length = 0;
     int components = 0;
 };
+
+class fbo_image : public image
+{
+public:
+    fbo_image(unsigned int width, unsigned int height);
+    ~fbo_image();
+
+    bool is_valid();
+
+    unsigned int fbo = 0;
+    unsigned int tex = 0;
+    unsigned int depth_buffer = 0;
+};

@@ -13,6 +13,7 @@ class data_set_elem
 public:
     uint32_t num_samples;
     image img;
+
 };
 
 class data_set
@@ -20,6 +21,9 @@ class data_set
 public:
     data_set(std::string path);
     //data_set(nlohmann::json data);
+
+    void render();
+
 
     bool get_is_successfully_generated(); //check if it was successfully generated
 
@@ -34,6 +38,11 @@ public:
     image img;
 private:
     void parse_json(nlohmann::json data, std::string path);
+
+    //flattens scene graph and convert to easily renderable format.
+    void parse_model();
+
+    void traverse_scene_graph(int node, std::vector<double>);
 
     bool successfully_generated = false;
 };
