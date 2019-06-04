@@ -27,8 +27,11 @@ public:
 	uint32_t get_window_height();
 	void  start_thread(void(*)(void*), void*);
 
-	std::string set_title(std::string); //not used
-	std::string get_title(); //not used
+    void  opengl_claim_context();
+
+	std::string set_title(std::string);
+	std::string get_title();
+>>>>>>> b562928f92568f05a914b5ffa7c70a04184f5696
 
 	LRESULT win32_handler(HWND win, UINT msg, WPARAM wParam, LPARAM lParam);
 
@@ -46,6 +49,9 @@ private:
 	int        cmd_show;
 	WNDCLASSEX w32_class;
 	HWND       win_h;
+
+	HWND       ogl_win_h;
+    HGLRC      ogl_context;
 
 	uint32_t width, height;
 	std::string window_title;

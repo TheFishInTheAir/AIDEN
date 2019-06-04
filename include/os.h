@@ -17,6 +17,9 @@ public:
     //generate opengl offscreen window & context
 	virtual void  initialise_opengl_offscreen() = 0;
 
+    //Set current OpenGL context
+    virtual void  opengl_claim_context() = 0;
+
 	//fills window with test bitmap
 	virtual void  window_test_draw() = 0;
 	

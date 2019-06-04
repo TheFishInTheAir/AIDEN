@@ -3,19 +3,19 @@
     "is_animated":false,
     "scene_path":"test2.glb",
 
-    "height_resolution":512,
-    "width_resolution" :512,
+    "width_resolution" :675,
+    "height_resolution":710,
 
     "static_data_set":
     [
         {
             "num_samples":64,
-            "path":"test64.png"
+            "path":"test_thenumberdoesn'tmatter.PNG"
         }
     ],
 
     "static_reference":
     {
-        "path":"test_reference.png"
+        "path":"test_reference.PNG"
     }
 }

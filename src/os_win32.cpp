@@ -190,16 +190,27 @@ void os_win32_context::_ogl_init(HWND win)
 		SetPixelFormat(dc,letWindowsChooseThisPixelFormat, &pfd);
 
 
-		HGLRC render_ctx = wglCreateContext(dc);
-        if(render_ctx == nullptr)
+		ogl_context = wglCreateContext(dc);
+        if(ogl_context == nullptr)
             Log::critErr(LOG_TAG, "fuck2"); //TODO: proper error message
 
 
-        wglMakeCurrent (dc, render_ctx);
+        wglMakeCurrent(dc, ogl_context);
 
         gl3wInit();
 
         Log::scc(LOG_TAG, std::string() + "OpenGL Version: " + (char*)glGetString(GL_VERSION));
+
+        wglMakeCurrent(nullptr, nullptr);
+
+        ReleaseDC(win, dc);
+}
+
+void os_win32_context::opengl_claim_context()
+{
+    HDC dc = GetDC(ogl_win_h); //NOTE(Ethan): idk if this is necessary
+    wglMakeCurrent(dc, ogl_context);
+    ReleaseDC(ogl_win_h, dc);
 }
 
 void os_win32_context::_initialise_opengl_offscreen_real()
@@ -207,8 +218,7 @@ void os_win32_context::_initialise_opengl_offscreen_real()
 
     Log::msg(LOG_TAG, "Creating OpenGL WIN32 Window.");
 
-    HWND hwin;
-	hwin = CreateWindowEx(
+	ogl_win_h = CreateWindowEx(
 		0,
 		"AIDEN",   //TODO: properly specify this stuff somewhere else.
 		"AIDEN_OGL",
@@ -216,7 +226,7 @@ void os_win32_context::_initialise_opengl_offscreen_real()
 		CW_USEDEFAULT, CW_USEDEFAULT, 1920, 1080, //TODO: variable resolution
 		NULL, NULL, instance, this);
 
-	if (hwin == NULL)
+	if (ogl_win_h == NULL)
 	{
         Log::critErr(LOG_TAG, "Win32 Window Creation Error: " + std::to_string(GetLastError()));
 
@@ -226,7 +236,7 @@ void os_win32_context::_initialise_opengl_offscreen_real()
 	}
 
 	//ShowWindow(hwin, cmd_show);
-	UpdateWindow(hwin);
+	UpdateWindow(ogl_win_h);
 
 }
 
