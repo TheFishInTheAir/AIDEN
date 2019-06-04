@@ -4,6 +4,10 @@
 #include <image.h>
 #include <stb_image.h>
 
+#include <GL/gl3w.h>
+
+//taken from glview tinygltf demo.
+#define BUFFER_OFFSET(i) ((char *)NULL + (i))
 
 
 data_set::data_set(std::string path)
@@ -99,17 +103,18 @@ bool data_set::get_is_successfully_generated()
     return successfully_generated;
 }
 
-void ds_env::traverse_scene_graph(int node, double4x4 mat)
+void ds_env::traverse_scene_graph(int node, double4x4 mat, int depth)
 {
     tinygltf::Node n = environment.nodes[node];
-    Log::tVrb(LOG_TAG, "Entering Node: "+n.name);
 
-    Log::dbg(LOG_TAG, "  Camera Index: "+std::to_string(n.camera)+".");
+    std::string preface = "";
+    for(int i = 0; i < depth+1; i++)
+        preface += "-";
 
-    Log::dbg(LOG_TAG, "  Mesh Index: "+std::to_string(n.mesh)+".");
+    Log::tVrb(LOG_TAG, preface+"Entering Node: "+n.name);
 
     for(auto const& x : n.extensions)
-        Log::dbg(LOG_TAG, "  Extensions: "+x.first);
+        Log::dbg(LOG_TAG, preface+" Extensions: "+x.first);
 
 
     double4x4 f_mat = double4x4(linalg::identity);
@@ -155,22 +160,20 @@ void ds_env::traverse_scene_graph(int node, double4x4 mat)
         auto mesh = environment.meshes[n.mesh];
         for(auto prim : mesh.primitives)
         {
-            ds_mesh* m = new ds_mesh();
-            m->p = p;
-            m->mesh = mesh;
-            m->prim = prim;
-            m->model = mat;
+            ds_mesh* m = new ds_mesh(p, mesh, prim, mat);
 
-            Log::dbg(LOG_TAG, "Num Attribs: "+std::to_string(prim.attributes.size()) + ", THING: "+
-                     std::to_string(prim.mode));
         }
+
+    }
+    if(n.camera != -1)
+    {//TODO: do shit
 
     }
 
     for(int c : n.children)
-        traverse_scene_graph(c, mat);
+        traverse_scene_graph(c, mat, ++depth);
 
-    Log::tVrb(LOG_TAG, "Exiting Node: "+n.name);
+    Log::tVrb(LOG_TAG, preface+"Exiting Node:  "+n.name);
 }
 
 
@@ -199,12 +202,91 @@ void ds_env::parse_model()
     for(std::string e : environment.extensionsRequired)
         Log::tVrb(LOG_TAG, "GLTF Model requires extension: '" + e + "'.");
 
+    for(auto& acc : environment.accessors)
+        if(acc.sparse.isSparse)
+            Log::err(LOG_TAG, "Sparse allocators aren't currently supported.");
 
     for(int n : s.nodes)
-        traverse_scene_graph(n, double4x4(linalg::identity));
+        traverse_scene_graph(n, double4x4(linalg::identity), 0);
 }
 
 void data_set::render()
 {
+
+}
+
+ds_mesh::ds_mesh(data_set* p, tinygltf::Mesh mesh, tinygltf::Primitive prim, double4x4 model)
+{
+    this->p = p;
+    this->mesh = mesh;
+    this->model = model;
+    this->prim  = prim;
+
+    Log::dbg(LOG_TAG, "Num Attribs: "+std::to_string(prim.attributes.size()) + ", THING: "+
+             std::to_string(prim.mode));
+
+    Log::dbg(LOG_TAG, "VERTEX: "+std::to_string(prim.attributes["POSITION"]));
+    Log::dbg(LOG_TAG, "NORMAL: "+std::to_string(prim.attributes["NORMAL"]));
+
+    init_opengl();
+
+}
+
+void ds_mesh::init_opengl()
+{
+    glGenVertexArrays(1, &vao);
+
+    glBindVertexArray(vao);
+
+    for(auto k : prim.attributes)
+    { //vbos
+        unsigned int* vbo;
+        unsigned int pos;
+        if(k.first == "POSITION")
+        {vbo = &vertex_buffer;   pos = 0;}
+        else if(k.first == "NORMAL")
+        {vbo = &normal_buffer;   pos = 1;}
+        else if(k.first == "TEXCOORD_0")
+        {vbo = &texcoord_buffer; pos = 2;}
+        else
+        {
+            Log::wrn(LOG_TAG, "Unknown Attribute Type: '"+k.first+"'. SKIPPING ATTRIBUTE.");
+            continue;
+        }
+
+        auto& accessor   = p->env->environment.accessors[k.second];
+        auto& bufferView = p->env->environment.bufferViews[accessor.bufferView];
+        auto& buffer     = p->env->environment.buffers[bufferView.buffer];
+
+        glGenBuffers(1, vbo);
+
+        glBindBuffer(GL_ARRAY_BUFFER, *vbo);
+        glBufferData(GL_ARRAY_BUFFER, bufferView.byteLength,
+                     buffer.data.data()+bufferView.byteOffset, GL_STATIC_DRAW);
+        glEnableVertexAttribArray(pos);
+
+        //accessor type returns an enum, but the enum values work in this context
+        //as long as accessor type is never scalar (which it shouldn't be for vertices, normals, or uvs)
+
+        glVertexAttribPointer(pos, accessor.type,
+                              accessor.componentType,
+                              accessor.normalized ? GL_TRUE : GL_FALSE,
+                              accessor.ByteStride(bufferView),
+                              BUFFER_OFFSET(accessor.byteOffset));
+
+
+    }
+    { //ibo
+        auto& accessor   = p->env->environment.accessors[prim.indices];
+        auto& bufferView = p->env->environment.bufferViews[accessor.bufferView];
+        auto& buffer     = p->env->environment.buffers[bufferView.buffer];
+
+        glGenBuffers(1, &index_buffer);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_buffer);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, bufferView.byteLength,
+                     buffer.data.data()+bufferView.byteOffset, GL_STATIC_DRAW);
+    }
+
+    glBindVertexArray(0);
 
 }

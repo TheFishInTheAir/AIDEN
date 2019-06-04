@@ -6,9 +6,14 @@
 #include <gbuffer_ogl.h>
 #include <stb_image.h>
 #include <data_set.h>
+#include <shaders.h>
 
 void do_the_test(os_context* ctx)
 {
+    //OpenGL Tests
+
+    gbuffer_renderer_ogl* renderer = new gbuffer_renderer_ogl(ctx);
+    shaders::compile();
     //'.' is run.bat btw, not the exe (pretty stupid tbh)
     resource_handle handle = resource_manager::load_file(
         resource_manager::get_res_path() + "good.png", RM_FILE_DW);
@@ -39,7 +44,7 @@ void do_the_test(os_context* ctx)
 
 
     //Set Test
-    data_set* ds = new data_set(resource_manager::get_res_path()+"data/test2/");
+    data_set* ds = new data_set(resource_manager::get_res_path()+"data/test1/");
     Log::dbg("Height: " + std::to_string(ds->height) + ", Width: " + std::to_string(ds->width));
     //test blit the loaded files
     for(int y = 0; y < ds->height; y++) //blit and convert to the win32 colourspace.
@@ -60,9 +65,6 @@ void do_the_test(os_context* ctx)
             bmap[(x+1200+y*ctx->get_window_width())*4+3] = ds->sets[0].img.data[(x+y*ds->width)*4+3];
         }
 
-    //OpenGL Tests
-
-    gbuffer_renderer_ogl* renderer = new gbuffer_renderer_ogl(ctx);
     renderer->create_gbuffer_for_set(ds);
 
     Log::scc("Finished Tests");

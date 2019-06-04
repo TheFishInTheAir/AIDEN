@@ -197,9 +197,13 @@ void os_win32_context::_ogl_init(HWND win)
 
         wglMakeCurrent(dc, ogl_context);
 
-        gl3wInit();
+        if(gl3wInit())
+        {
+            Log::critErr(LOG_TAG, "Failed to create OpenGL Context.");
+        }
 
         Log::scc(LOG_TAG, std::string() + "OpenGL Version: " + (char*)glGetString(GL_VERSION));
+        Log::scc(LOG_TAG, std::string() + "OpenGL Vendor:  " + (char*)glGetString(GL_VENDOR));
 
         wglMakeCurrent(nullptr, nullptr);
 

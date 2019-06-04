@@ -63,7 +63,7 @@ public:
     tinygltf::Model environment;
     void parse_model();
 private:
-    void traverse_scene_graph(int node, double4x4);
+    void traverse_scene_graph(int node, double4x4, int depth);
 
     const std::string LOG_TAG = "DataSetEnvironment";
 };
@@ -71,11 +71,24 @@ private:
 class ds_mesh
 {
 public:
+    ds_mesh(data_set*, tinygltf::Mesh, tinygltf::Primitive, double4x4);
+
     data_set* p;
 
     tinygltf::Mesh mesh;
     tinygltf::Primitive prim;
+
+    unsigned int vao = 0;
+
+    unsigned int index_buffer    = 0;
+
+    unsigned int vertex_buffer   = 0;
+    unsigned int normal_buffer   = 0;
+    unsigned int texcoord_buffer = 0;
+
     double4x4 model;
+
+    void init_opengl();
 
 private:
     const std::string LOG_TAG = "DataSetMesh";
