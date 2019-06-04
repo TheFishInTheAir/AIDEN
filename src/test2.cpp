@@ -39,25 +39,25 @@ void do_the_test(os_context* ctx)
 
 
     //Set Test
-    data_set* ds = new data_set(resource_manager::get_res_path()+"data/test1/");
-
+    data_set* ds = new data_set(resource_manager::get_res_path()+"data/test2/");
+    Log::dbg("Height: " + std::to_string(ds->height) + ", Width: " + std::to_string(ds->width));
     //test blit the loaded files
-    for(int y = 0; y < height; y++) //blit and convert to the win32 colourspace.
-        for(int x = 0; x <width; x++)
+    for(int y = 0; y < ds->height; y++) //blit and convert to the win32 colourspace.
+        for(int x = 0; x < ds->width; x++)
         {
-            bmap[(x+600+y*ctx->get_window_width())*4]   = ds->img.data[(x+y*width)*4+2];
-            bmap[(x+600+y*ctx->get_window_width())*4+1] = ds->img.data[(x+y*width)*4+1];
-            bmap[(x+600+y*ctx->get_window_width())*4+2] = ds->img.data[(x+y*width)*4];
-            bmap[(x+600+y*ctx->get_window_width())*4+3] = ds->img.data[(x+y*width)*4+3];
+            bmap[(x+600+y*ctx->get_window_width())*4]   = ds->img.data[(x+y*ds->width)*4+2];
+            bmap[(x+600+y*ctx->get_window_width())*4+1] = ds->img.data[(x+y*ds->width)*4+1];
+            bmap[(x+600+y*ctx->get_window_width())*4+2] = ds->img.data[(x+y*ds->width)*4];
+            bmap[(x+600+y*ctx->get_window_width())*4+3] = ds->img.data[(x+y*ds->width)*4+3];
         }
 
-    for(int y = 0; y < height; y++) //blit and convert to the win32 colourspace.
-        for(int x = 0; x <width; x++)
+    for(int y = 0; y < ds->height; y++) //blit and convert to the win32 colourspace.
+        for(int x = 0; x < ds->width; x++)
         {
-            bmap[(x+1200+y*ctx->get_window_width())*4]   = ds->sets[0].img.data[(x+y*width)*4+2];
-            bmap[(x+1200+y*ctx->get_window_width())*4+1] = ds->sets[0].img.data[(x+y*width)*4+1];
-            bmap[(x+1200+y*ctx->get_window_width())*4+2] = ds->sets[0].img.data[(x+y*width)*4];
-            bmap[(x+1200+y*ctx->get_window_width())*4+3] = ds->sets[0].img.data[(x+y*width)*4+3];
+            bmap[(x+1200+y*ctx->get_window_width())*4]   = ds->sets[0].img.data[(x+y*ds->width)*4+2];
+            bmap[(x+1200+y*ctx->get_window_width())*4+1] = ds->sets[0].img.data[(x+y*ds->width)*4+1];
+            bmap[(x+1200+y*ctx->get_window_width())*4+2] = ds->sets[0].img.data[(x+y*ds->width)*4];
+            bmap[(x+1200+y*ctx->get_window_width())*4+3] = ds->sets[0].img.data[(x+y*ds->width)*4+3];
         }
 
     //OpenGL Tests

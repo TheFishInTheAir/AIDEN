@@ -25,6 +25,8 @@ include_directories(${CMAKE_BINARY_DIR}/include)
 
 add_executable(AIDEN ${SRC_FILES})
 
+add_definitions(-DNOMINMAX)
+
 if(MACOSX)
   #link_directories("/usr/local/lib")
   message("This is running on OSX")
