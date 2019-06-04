@@ -29,10 +29,6 @@ public:
 
     void  opengl_claim_context();
 
-	std::string set_title(std::string);
-	std::string get_title();
->>>>>>> b562928f92568f05a914b5ffa7c70a04184f5696
-
 	LRESULT win32_handler(HWND win, UINT msg, WPARAM wParam, LPARAM lParam);
 
 private:
