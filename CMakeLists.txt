@@ -29,12 +29,14 @@ if(MACOSX)
   #link_directories("/usr/local/lib")
   message("This is running on OSX")
   target_link_libraries(AIDEN /usr/local/lib/libtensorflow.so)
+  target_link_libraries(AIDEN OpenGL)
 elseif(WIN32)
   #link_directories("${CMAKE_CURRENT_SOURCE_DIR}/libs/win/")
   target_link_libraries(AIDEN ${CMAKE_CURRENT_SOURCE_DIR}/libs/win/tensorflow.lib)
+  target_link_libraries(AIDEN OpenGL32)
+
 endif()
 
-target_link_libraries(AIDEN OpenGL32)
 
 #kinda doesn't ever work from my experience - ethan
 file(COPY "res" DESTINATION "${CMAKE_BINARY_DIR}")

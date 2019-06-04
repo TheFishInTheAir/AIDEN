@@ -18,6 +18,9 @@ public:
 	void* get_window_bitmap();
 	uint32_t get_window_width();
 	uint32_t get_window_height();
+
+    void  initialise_opengl_offscreen();
+
 	void  start_thread(void(*)(void*), void*);
 
 };
