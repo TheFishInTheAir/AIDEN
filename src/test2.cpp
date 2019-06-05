@@ -67,6 +67,19 @@ void do_the_test(os_context* ctx)
 
     renderer->create_gbuffer_for_set(ds);
 
+    renderer->render_gbuffer(); //moment of truth.
+    renderer->get_gbuffer()->world_pos->retrieve();
+    Log::scc("Did retrieval.");
+
+    fbo_image* i = renderer->get_gbuffer()->world_pos;
+    uint8_t* d = i->data;
+    if(i->is_valid()!=true)
+        Log::critErr("Fuck");
+
+    for(int y = 0; y < i->height; y++) //blit and convert to the win32 colourspace.
+        for(int x = 0; x < i->width; x++)
+            ((uint32_t*)bmap)[x+(y+520)*ctx->get_window_width()] = ((uint32_t*)d)[x+y*i->width];
+
     Log::scc("Finished Tests");
 
 }

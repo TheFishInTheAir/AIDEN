@@ -1,5 +1,6 @@
 #include <gbuffer_ogl.h>
 #include <log.h>
+#include <shaders.h>
 
 const std::string LOG_TAG = "GBuffer Renderer";
 
@@ -19,6 +20,21 @@ void gbuffer_renderer_ogl::create_gbuffer_for_set(data_set* set)
 
     buffer->init_ogl();
 
+}
+
+
+void gbuffer_renderer_ogl::render_gbuffer()
+{
+    //TODO: add checks to make sure data set is valid
+    glBindFramebuffer(GL_FRAMEBUFFER, buffer->world_pos->fbo);
+    glClearColor(1.f, 0.f, 1.f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // we're not using the stencil buffer now
+    glEnable(GL_DEPTH_TEST);
+    current_set->render(shaders::test_shader_program);
+
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+    Log::dbg("Finished Render\n");
 }
 
 void gbuffer_renderer_ogl::delete_gbuffer()
@@ -48,10 +64,11 @@ void gbuffer_renderer_ogl::ogl_context_init(os_context* ctx)
 
 }
 
+
 const std::string GB_LOG_TAG = "GBuffer";
 
 gbuffer::gbuffer(unsigned int width, unsigned int height)
-{
+{\
     this->width = width;
     this->height = height;
 }

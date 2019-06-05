@@ -27,6 +27,8 @@ public:
 
     bool is_valid();
 
+    void retrieve();
+
     unsigned int fbo = 0;
     unsigned int tex = 0;
     unsigned int depth_buffer = 0;

@@ -8,6 +8,8 @@
 
 //taken from glview tinygltf demo.
 #define BUFFER_OFFSET(i) ((char *)NULL + (i))
+#define MATPRINT(m) for(int i = 0; i < 4; i++) printf("%lf %lf %lf %lf\n", \
+                                                      m[i][0], m[i][1], m[i][2], m[i][3])
 
 
 data_set::data_set(std::string path)
@@ -152,8 +154,10 @@ void ds_env::traverse_scene_graph(int node, double4x4 mat, int depth)
             r[i] = n.rotation[i];
         r_mat = rotation_matrix(r);
     }
-
-    mat = double4x4(f_mat * t_mat * r_mat * s_mat * mat);
+    double4x4 test = linalg::mul(linalg::mul(t_mat, r_mat), s_mat); //TODO: refactor
+    //MATPRINT(test);
+    mat = linalg::mul(linalg::mul(f_mat, test), mat);
+    //MATPRINT(mat);
 
     if(n.mesh!=-1) //Generate a mesh
     {
@@ -161,13 +165,19 @@ void ds_env::traverse_scene_graph(int node, double4x4 mat, int depth)
         for(auto prim : mesh.primitives)
         {
             ds_mesh* m = new ds_mesh(p, mesh, prim, mat);
-
+            meshes.push_back(m);
         }
 
     }
     if(n.camera != -1)
-    {//TODO: do shit
-
+    {
+        if(cam==nullptr)
+        {
+            Log::tVrb(LOG_TAG, preface + " Is Active Camera.");
+            cam = new ds_camera(p, mat, environment.cameras[n.camera]);
+        }
+        else
+        { Log::wrn(LOG_TAG, preface + " Inactive Camera."); }
     }
 
     for(int c : n.children)
@@ -206,13 +216,23 @@ void ds_env::parse_model()
         if(acc.sparse.isSparse)
             Log::err(LOG_TAG, "Sparse allocators aren't currently supported.");
 
+
+
     for(int n : s.nodes)
         traverse_scene_graph(n, double4x4(linalg::identity), 0);
 }
 
-void data_set::render()
+void data_set::render(unsigned int program)
 {
-
+    for(auto m : env->meshes)
+    {
+        glUseProgram(program);
+        float4x4 mvp = linalg::mul(env->cam->gl_vp, (float4x4)m->model);
+        glBindVertexArray(m->vao);
+        glUniformMatrix4fv(glGetUniformLocation(program, "MVP"), 1, GL_FALSE, &mvp[0][0]);
+        glDrawElements(GL_TRIANGLES, m->num_indices, GL_UNSIGNED_INT, 0);
+        glBindVertexArray(0);
+    }
 }
 
 ds_mesh::ds_mesh(data_set* p, tinygltf::Mesh mesh, tinygltf::Primitive prim, double4x4 model)
@@ -221,12 +241,6 @@ ds_mesh::ds_mesh(data_set* p, tinygltf::Mesh mesh, tinygltf::Primitive prim, dou
     this->mesh = mesh;
     this->model = model;
     this->prim  = prim;
-
-    Log::dbg(LOG_TAG, "Num Attribs: "+std::to_string(prim.attributes.size()) + ", THING: "+
-             std::to_string(prim.mode));
-
-    Log::dbg(LOG_TAG, "VERTEX: "+std::to_string(prim.attributes["POSITION"]));
-    Log::dbg(LOG_TAG, "NORMAL: "+std::to_string(prim.attributes["NORMAL"]));
 
     init_opengl();
 
@@ -237,7 +251,7 @@ void ds_mesh::init_opengl()
     glGenVertexArrays(1, &vao);
 
     glBindVertexArray(vao);
-
+    size_t total_size = 0;
     for(auto k : prim.attributes)
     { //vbos
         unsigned int* vbo;
@@ -253,11 +267,10 @@ void ds_mesh::init_opengl()
             Log::wrn(LOG_TAG, "Unknown Attribute Type: '"+k.first+"'. SKIPPING ATTRIBUTE.");
             continue;
         }
-
         auto& accessor   = p->env->environment.accessors[k.second];
         auto& bufferView = p->env->environment.bufferViews[accessor.bufferView];
         auto& buffer     = p->env->environment.buffers[bufferView.buffer];
-
+        total_size += bufferView.byteLength;
         glGenBuffers(1, vbo);
 
         glBindBuffer(GL_ARRAY_BUFFER, *vbo);
@@ -280,6 +293,11 @@ void ds_mesh::init_opengl()
         auto& accessor   = p->env->environment.accessors[prim.indices];
         auto& bufferView = p->env->environment.bufferViews[accessor.bufferView];
         auto& buffer     = p->env->environment.buffers[bufferView.buffer];
+        Log::tVrb(LOG_TAG, "Mesh has: '"+
+                  std::to_string(accessor.count)+"' indices. '"+
+                  std::to_string(accessor.count/3)+"' tris. '"+
+                  std::to_string(total_size+bufferView.byteLength)+"' bytes total.");
+        num_indices = accessor.count;
 
         glGenBuffers(1, &index_buffer);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, index_buffer);
@@ -289,4 +307,21 @@ void ds_mesh::init_opengl()
 
     glBindVertexArray(0);
 
+}
+
+ds_camera::ds_camera(data_set* p, double4x4 inv_view, tinygltf::Camera c)
+{
+    this->p = p;
+    if(c.type == "perspective")
+    {
+        double4x4 proj = linalg::perspective_matrix(c.perspective.yfov,  c.perspective.aspectRatio,
+                                            c.perspective.znear, c.perspective.zfar);
+        this->proj = proj;
+        this->view = linalg::inverse(inv_view);
+        this->gl_vp = (float4x4) linalg::mul(proj, view);
+    }
+    else
+    {
+        Log::err(LOG_TAG, "Unsupported Camera type '"+c.type+"'.");
+    }
 }

@@ -164,7 +164,7 @@ void os_win32_context::_ogl_init(HWND win)
 		{
 			sizeof(PIXELFORMATDESCRIPTOR),
 			1,
-			PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER,    //Flags
+			PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL,    //Flags
 			PFD_TYPE_RGBA,        // The kind of framebuffer. RGBA or palette.
 			32,                   // Colordepth of the framebuffer.
 			0, 0, 0, 0, 0, 0,
@@ -185,10 +185,11 @@ void os_win32_context::_ogl_init(HWND win)
         if(dc==nullptr)
             Log::critErr(LOG_TAG, "fuck"); //TODO: proper error message
 
+        Log::vrb(LOG_TAG, "Selecting Pixel Format (this takes a long time...).");
 		int  letWindowsChooseThisPixelFormat; //TODO: refactor
 		letWindowsChooseThisPixelFormat = ChoosePixelFormat(dc, &pfd);
-		SetPixelFormat(dc,letWindowsChooseThisPixelFormat, &pfd);
-
+		SetPixelFormat(dc,letWindowsChooseThisPixelFormat, &pfd); //takes a long time
+        Log::vrb(LOG_TAG, "Finished Selecting Pixel Format (this takes a long time...).");
 
 		ogl_context = wglCreateContext(dc);
         if(ogl_context == nullptr)

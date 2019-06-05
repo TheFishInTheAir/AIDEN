@@ -26,11 +26,9 @@ layout(location = 1) in vec3 normal;
 layout(location = 2) in vec3 texcoord;
 
 uniform mat4 MVP;
-out vec3 inter_pos;
 void main()
 {
-    gl_Position = MVP * vec4(vert, 1);
-    inter_pos = vert;
+    gl_Position =  vec4(vert, 1);// MVP *
 }
 
 )1SRAW1";
@@ -39,10 +37,9 @@ void main()
 #version 330
 
 out vec4 colour;
-in  vec3 inter_pos;
 void main()
 {
-    colour = vec4(inter_pos, 1);
+    colour = vec4(1,1,1,1);
 }
 
 )1SRAW1";

@@ -55,10 +55,11 @@ fbo_image::fbo_image(unsigned int width, unsigned int height) //TODO: add suppor
 {
     this->width  = width;
     this->height = height;
-    this->components = 3;
-    this->length = width*height*this->components*sizeof(float);
+    this->components = 3+1; //+1 bc padding
+    this->length = width*height*this->components;//*sizeof(float);
     this->data = (uint8_t*) malloc(this->length);
-
+    for(unsigned long long i = 0; i < length; i++)
+        data[i] = 0;
     Log::vrb(LOG_TAG, "Beginning Framebuffer Creation   ("+
              std::to_string(width)+", "+std::to_string(height)+").");
 
@@ -72,7 +73,7 @@ fbo_image::fbo_image(unsigned int width, unsigned int height) //TODO: add suppor
     glBindTexture(GL_TEXTURE_2D, tex);
 
     //allocate space
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_FLOAT, nullptr);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_FLOAT, nullptr);
 
     //we never sample so we don't need anything complicated.
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
@@ -118,4 +119,12 @@ fbo_image::~fbo_image()
 {
     glDeleteFramebuffers(1, &fbo);
     free(data);
+}
+
+
+void fbo_image::retrieve()
+{
+    glBindTexture(GL_TEXTURE_2D, tex);
+    glGetTexImage(GL_TEXTURE_2D, 0, GL_BGRA, GL_UNSIGNED_BYTE, data);
+    glBindTexture(GL_TEXTURE_2D, 0);
 }
