@@ -27,9 +27,10 @@ void gbuffer_renderer_ogl::render_gbuffer()
 {
     //TODO: add checks to make sure data set is valid
     glBindFramebuffer(GL_FRAMEBUFFER, buffer->world_pos->fbo);
-    glClearColor(1.f, 0.f, 1.f, 1.0f);
+    glClearColor(0.1f, 0.3f, 0.6f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); // we're not using the stencil buffer now
     glEnable(GL_DEPTH_TEST);
+
     current_set->render(shaders::test_shader_program);
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);

@@ -226,11 +226,17 @@ void data_set::render(unsigned int program)
 {
     for(auto m : env->meshes)
     {
+        glDisable(GL_CULL_FACE);
         glUseProgram(program);
         float4x4 mvp = linalg::mul(env->cam->gl_vp, (float4x4)m->model);
         glBindVertexArray(m->vao);
+
         glUniformMatrix4fv(glGetUniformLocation(program, "MVP"), 1, GL_FALSE, &mvp[0][0]);
+
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m->index_buffer);
+
         glDrawElements(GL_TRIANGLES, m->num_indices, GL_UNSIGNED_INT, 0);
+
         glBindVertexArray(0);
     }
 }
